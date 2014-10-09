@@ -1,0 +1,12 @@
+#version 410
+
+uniform mat4 uniform_Projection;
+uniform mat4 uniform_Transform[30];
+in vec3  VertexPosition; 
+in vec4  VertexColor; 
+out vec4    varying_Color;
+ 
+void main(void) { 
+  varying_Color = VertexColor; 
+  gl_Position = uniform_Projection * uniform_Transform[gl_InstanceID] * vec4(VertexPosition, 1); 
+} 
