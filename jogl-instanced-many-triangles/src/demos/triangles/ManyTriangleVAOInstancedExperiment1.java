@@ -24,7 +24,6 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.math.Matrix4;
 import com.jogamp.opengl.util.FPSAnimator;
 import com.jogamp.opengl.util.GLArrayDataServer;
@@ -41,15 +40,13 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 	private float aspect;
 
 	protected float winScale = 0.1f;
-	private static final float SCALE_MIN = 1e-10f;
-	private static final float SCALE_MAX = 10000f;
+	private static final float SCALE_MIN = 1e-3f;
+	private static final float SCALE_MAX = 100f;
 
+	private static final int NO_OF_TRIANGLES = 30;
 	private static final String shaderBasename = "triangles";
 	private ShaderState st;
 	private GLArrayDataServer interleavedVBO;
-
-	private static final int NO_OF_TRIANGLES = 30;
-
 	private PMVMatrix projectionMatrix;
 
 	private final Matrix4[] mat = new Matrix4[NO_OF_TRIANGLES];
@@ -59,10 +56,6 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 	private boolean isInitialized = false;
 
 	public static void main(String[] args) {
-//		System.out.println(fragmentShaderString);
-//		System.out.println(vertexShaderString);
-//		System.exit(0);
-
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -141,21 +134,14 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 		System.err.println("GL_VERSION: " + gl.glGetString(GL4.GL_VERSION));
 
 		initShader(gl);
-        // setup mgl_PMVMatrix
         projectionMatrix = new PMVMatrix();
-//        projectionMatrix.glMatrixMode(PMVMatrix.GL_PROJECTION);
-//        projectionMatrix.glLoadIdentity();
-//        projectionMatrix.glMatrixMode(PMVMatrix.GL_MODELVIEW);
-//        projectionMatrix.glLoadIdentity();
-
 		projectionMatrixUniform = new GLUniformData("uniform_Projection", 4, 4, projectionMatrix.glGetPMatrixf());
 		st.ownUniform(projectionMatrixUniform);
         if(!st.uniform(gl, projectionMatrixUniform)) {
             throw new GLException("Error setting ProjectionMatrix in shader: " + st);
         }
 
-//        transformMatrixUniform =  new GLUniformData("uniform_Transform", 4, NO_OF_TRIANGLES, triangleTransform);//Matrix.glGetPMatrixf());
-        GLUniformData transformMatrixUniform =  new GLUniformData("uniform_Transform", 4, NO_OF_TRIANGLES, triangleTransform);//Matrix.glGetPMatrixf());
+        transformMatrixUniform =  new GLUniformData("uniform_Transform", 4, 4, triangleTransform);
 
         st.ownUniform(transformMatrixUniform);
         if(!st.uniform(gl, transformMatrixUniform)) {
@@ -169,51 +155,18 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 	private void initVBO(GL4 gl) {
 
         interleavedVBO = GLArrayDataServer.createGLSLInterleaved(4+4, GL.GL_FLOAT, false, 3 * NO_OF_TRIANGLES, GL.GL_STATIC_DRAW);
-//        ;
-//        in vec4
         interleavedVBO.addGLSLSubArray("VertexPosition",      3, GL.GL_ARRAY_BUFFER);
         interleavedVBO.addGLSLSubArray("VertexColor",         4, GL.GL_ARRAY_BUFFER);
-        //interleavedVBO.addGLSLSubArray("mgl_Normal",        3, GL.GL_ARRAY_BUFFER);
-//        interleavedVBO.addGLSLSubArray("mgl_MultiTexCoord", 2, GL.GL_ARRAY_BUFFER);
 
         FloatBuffer ib = (FloatBuffer)interleavedVBO.getBuffer();
 
         for(int i = 0; i < 1; i++) {
             ib.put(vertices,  i*3, 3);
             ib.put(colors,    i*4, 4);
-            //ib.put(s_cubeNormals,   i*3, 3);
-//            ib.put(s_quadTexCoords, i*2, 2);
         }
         interleavedVBO.seal(gl, true);
         interleavedVBO.enableBuffer(gl, false);
         st.ownAttribute(interleavedVBO, true);
-
-//		FloatBuffer interleavedBuffer = Buffers.newDirectFloatBuffer(vertices.length + colors.length);
-//		for(int i = 0; i < vertices.length/3; i++) {
-//			for(int j = 0; j < 3; j++) {
-//				interleavedBuffer.put(vertices[i*3 + j]);
-//			}
-//			for(int j = 0; j < 4; j++) {
-//				interleavedBuffer.put(colors[i*4 + j]);
-//			}
-//		}
-//		interleavedBuffer.flip();
-
-//		vao = new int[1];
-//		gl.glGenVertexArrays(1, vao , 0);
-//		gl.glBindVertexArray(vao[0]);
-//		vbo = new int[1];
-//		gl.glGenBuffers(1, vbo, 0);
-//		gl.glBindBuffer(GL4.GL_ARRAY_BUFFER, vbo[0]);
-//		gl.glBufferData(GL4.GL_ARRAY_BUFFER, interleavedBuffer.limit() * Buffers.SIZEOF_FLOAT, interleavedBuffer, GL4.GL_STATIC_DRAW);
-//
-//		gl.glEnableVertexAttribArray(locPos);
-//		gl.glEnableVertexAttribArray(locCol);
-//
-//		int stride = Buffers.SIZEOF_FLOAT * (3+4);
-//		gl.glVertexAttribPointer( locPos, 3, GL4.GL_FLOAT, false, stride, 0);
-//		gl.glVertexAttribPointer( locCol, 4, GL4.GL_FLOAT, false, stride, Buffers.SIZEOF_FLOAT * 3);
-
 		st.useProgram(gl, false);
 	}
 
@@ -246,7 +199,6 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 		gl3.glViewport(0, 0, width, height);
 		aspect = (float) width / (float) height;
 
-//		projectionMatrix = new PMVMatrix();
 		projectionMatrix.glMatrixMode(GL2.GL_PROJECTION);
 		projectionMatrix.glLoadIdentity();
 		projectionMatrix.gluPerspective(45, aspect, 0.001f, 20f);
@@ -260,28 +212,22 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 		GL4 gl = drawable.getGL().getGL4();
 		gl.glClear(GL4.GL_COLOR_BUFFER_BIT | GL4.GL_DEPTH_BUFFER_BIT);
 
-//		gl.glUseProgram(shaderProgram);
 		st.useProgram(gl, true);
 		projectionMatrix.glMatrixMode(GL2.GL_PROJECTION);
 		projectionMatrix.glPushMatrix();
 		projectionMatrix.glScalef(winScale, winScale, winScale);
 		projectionMatrix.update();
-//		gl.glUniformMatrix4fv(projectionMatrixLocation, 1, false, projectionMatrix.glGetPMatrixf());
 		st.uniform(gl, projectionMatrixUniform);
-
 		projectionMatrix.glPopMatrix();
 
 		generateTriangleTransform();
-//		gl.glUniformMatrix4fv(transformMatrixLocation, NO_OF_TRIANGLES, false, triangleTransform);
 		st.uniform(gl, transformMatrixUniform);
-//		gl.glBindVertexArray(vao[0]);
+		//gl.glVertexAttribDivisor() is not required since each instance has the same attribute (color).
 		gl.glDrawArraysInstanced(GL4.GL_TRIANGLES, 0, 3, NO_OF_TRIANGLES);
-		gl.glBindVertexArray(0);
-//		gl.glUseProgram(0);
 		st.useProgram(gl, false);
 	}
 
-	FloatBuffer triangleTransform = FloatBuffer.allocate(16 * NO_OF_TRIANGLES);
+	private final FloatBuffer triangleTransform = FloatBuffer.allocate(16 * NO_OF_TRIANGLES);
 
 	private void generateTriangleTransform() {
 		triangleTransform.clear();
@@ -298,41 +244,7 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 	public void dispose(GLAutoDrawable drawable){
 		GL4 gl = drawable.getGL().getGL4();
 		st.destroy(gl);
-
-//		gl.glUseProgram(0);
-//		gl.glDeleteBuffers(2, vbo, 0);
-//		gl.glDetachShader(shaderProgram, vertShader);
-//		gl.glDeleteShader(vertShader);
-//		gl.glDetachShader(shaderProgram, fragShader);
-//		gl.glDeleteShader(fragShader);
-//		gl.glDeleteProgram(shaderProgram);
 	}
-
-//	private static final String vertexShaderString =
-//			"#version 330 \n" +
-//					"\n" +
-//					"uniform mat4 uniform_Projection; \n" +
-//					"uniform mat4 uniform_Transform[" + NO_OF_TRIANGLES + "]; \n" +
-//					"in vec4  VertexPosition; \n" +
-//					"in vec4  VertexColor; \n" +
-//					"out vec4    varying_Color; \n" +
-//					"void main(void) \n" +
-//					"{ \n" +
-//					"  varying_Color = VertexColor; \n" +
-//					//"  gl_Position = uniform_Projection * VertexPosition; \n" +
-////					"  gl_Position = uniform_Transform[gl_InstanceID] * VertexPosition; \n" +
-//					"  gl_Position = uniform_Projection * uniform_Transform[gl_InstanceID] * VertexPosition; \n" +
-//					"} ";
-//
-//	private static final String fragmentShaderString =
-//			"#version 330\n" +
-//					"\n" +
-//					"in vec4    varying_Color; \n" +
-//					"out vec4    mgl_FragColor; \n" +
-//					"void main (void) \n" +
-//					"{ \n" +
-//					"  mgl_FragColor = varying_Color; \n" +
-//					"} ";
 
 	private static final float[] vertices = {
 			1.0f, 0.0f, 0,
