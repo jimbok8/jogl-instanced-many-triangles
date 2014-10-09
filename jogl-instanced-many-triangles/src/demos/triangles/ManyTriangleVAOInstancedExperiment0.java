@@ -44,14 +44,14 @@ public class ManyTriangleVAOInstancedExperiment0 implements GLEventListener {
 	private static final int locPos = 1;
 	private static final int locCol = 2;
 
-	private static final int NO_OF_TRIANGLES = 30;
+	private static final int NO_OF_INSTANCE = 30;
 
 	private PMVMatrix projectionMatrix;
 
 	private int[] vbo;
 	private int[] vao;
-	private final Matrix4[] mat = new Matrix4[NO_OF_TRIANGLES];
-	private final float[] rotationSpeed = new float[NO_OF_TRIANGLES];
+	private final Matrix4[] mat = new Matrix4[NO_OF_INSTANCE];
+	private final float[] rotationSpeed = new float[NO_OF_INSTANCE];
 
 	public static void main(String[] args){
 		SwingUtilities.invokeLater(new Runnable() {
@@ -102,13 +102,13 @@ public class ManyTriangleVAOInstancedExperiment0 implements GLEventListener {
 
 	private void initTransform() {
 		Random rnd = new Random();
-		for(int i = 0; i < NO_OF_TRIANGLES; i++) {
+		for(int i = 0; i < NO_OF_INSTANCE; i++) {
 			rotationSpeed[i] = 0.3f * rnd.nextFloat();
 			mat[i] = new Matrix4();
 			mat[i].loadIdentity();
 			float scale = 1f + 4 * rnd.nextFloat();
 			mat[i].scale(scale, scale, scale);
-			mat[i].rotate(0, 0, 0, 1);
+//			mat[i].rotate(0, 0, 0, 1);
 			//setup initial position of each triangle
 			mat[i].translate(20f * rnd.nextFloat() - 10f,
 							 10f * rnd.nextFloat() -  5f,
@@ -251,22 +251,22 @@ public class ManyTriangleVAOInstancedExperiment0 implements GLEventListener {
 		gl.glUniformMatrix4fv(projectionMatrixLocation, 1, false, projectionMatrix.glGetPMatrixf());
 		projectionMatrix.glPopMatrix();
 		generateTriangleTransform();
-		gl.glUniformMatrix4fv(transformMatrixLocation, NO_OF_TRIANGLES, false, triangleTransform);
+		gl.glUniformMatrix4fv(transformMatrixLocation, NO_OF_INSTANCE, false, triangleTransform);
 
 		gl.glBindVertexArray(vao[0]);
-		gl.glDrawArraysInstanced(GL4.GL_TRIANGLES, 0, 3, NO_OF_TRIANGLES);
+		gl.glDrawArraysInstanced(GL4.GL_TRIANGLES, 0, 3, NO_OF_INSTANCE);
 		gl.glBindVertexArray(0);
 		gl.glUseProgram(0);
 	}
 
-	FloatBuffer triangleTransform = FloatBuffer.allocate(16 * NO_OF_TRIANGLES);
+	FloatBuffer triangleTransform = FloatBuffer.allocate(16 * NO_OF_INSTANCE);
 
 	private void generateTriangleTransform() {
 		triangleTransform.clear();
-		for(int i = 0; i < NO_OF_TRIANGLES; i++) {
-			mat[i].translate(0.1f, 0.1f, 0);
+		for(int i = 0; i < NO_OF_INSTANCE; i++) {
+//			mat[i].translate(0.1f, 0.1f, 0);
 			mat[i].rotate(rotationSpeed[i], 0, 0, 1);
-			mat[i].translate(-0.1f, -0.1f, 0);
+//			mat[i].translate(-0.1f, -0.1f, 0);
 			triangleTransform.put(mat[i].getMatrix());
 		}
 		triangleTransform.flip();
@@ -288,7 +288,7 @@ public class ManyTriangleVAOInstancedExperiment0 implements GLEventListener {
 			"#version 330 \n" +
 					"\n" +
 					"uniform mat4 uniform_Projection; \n" +
-					"uniform mat4 uniform_Transform[" + NO_OF_TRIANGLES + "]; \n" +
+					"uniform mat4 uniform_Transform[" + NO_OF_INSTANCE + "]; \n" +
 					"in vec4  VertexPosition; \n" +
 					"in vec4  VertexColor; \n" +
 					"out vec4    varying_Color; \n" +

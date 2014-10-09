@@ -43,14 +43,14 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 	private static final float SCALE_MIN = 1e-3f;
 	private static final float SCALE_MAX = 100f;
 
-	private static final int NO_OF_TRIANGLES = 30;
+	private static final int NO_OF_INSTANCE = 30;
 	private static final String shaderBasename = "triangles";
 	private ShaderState st;
 	private GLArrayDataServer interleavedVBO;
 	private PMVMatrix projectionMatrix;
 
-	private final Matrix4[] mat = new Matrix4[NO_OF_TRIANGLES];
-	private final float[] rotationSpeed = new float[NO_OF_TRIANGLES];
+	private final Matrix4[] mat = new Matrix4[NO_OF_INSTANCE];
+	private final float[] rotationSpeed = new float[NO_OF_INSTANCE];
 	private GLUniformData projectionMatrixUniform;
 	private GLUniformData transformMatrixUniform;
 	private boolean isInitialized = false;
@@ -104,13 +104,12 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 
 	private void initTransform() {
 		Random rnd = new Random();
-		for(int i = 0; i < NO_OF_TRIANGLES; i++) {
+		for(int i = 0; i < NO_OF_INSTANCE; i++) {
 			rotationSpeed[i] = 0.3f * rnd.nextFloat();
 			mat[i] = new Matrix4();
 			mat[i].loadIdentity();
 			float scale = 1f + 4 * rnd.nextFloat();
 			mat[i].scale(scale, scale, scale);
-			mat[i].rotate(0, 0, 0, 1);
 			//setup initial position of each triangle
 			mat[i].translate(20f * rnd.nextFloat() - 10f,
 							 10f * rnd.nextFloat() -  5f,
@@ -154,13 +153,13 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 
 	private void initVBO(GL4 gl) {
 
-        interleavedVBO = GLArrayDataServer.createGLSLInterleaved(4+4, GL.GL_FLOAT, false, 3 * NO_OF_TRIANGLES, GL.GL_STATIC_DRAW);
+        interleavedVBO = GLArrayDataServer.createGLSLInterleaved(3 + 4, GL.GL_FLOAT, false, 3 * NO_OF_INSTANCE, GL.GL_STATIC_DRAW);
         interleavedVBO.addGLSLSubArray("VertexPosition",      3, GL.GL_ARRAY_BUFFER);
         interleavedVBO.addGLSLSubArray("VertexColor",         4, GL.GL_ARRAY_BUFFER);
 
         FloatBuffer ib = (FloatBuffer)interleavedVBO.getBuffer();
 
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 3; i++) {
             ib.put(vertices,  i*3, 3);
             ib.put(colors,    i*4, 4);
         }
@@ -173,11 +172,10 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
     private void initShader(GL4 gl) {
         // Create & Compile the shader objects
         ShaderCode rsVp = ShaderCode.create(gl, GL2ES2.GL_VERTEX_SHADER, this.getClass(),
-                                            "shaders", "shaders/bin", shaderBasename, false);
+                                            "shaders", "shaders/bin", shaderBasename, true);
         ShaderCode rsFp = ShaderCode.create(gl, GL2ES2.GL_FRAGMENT_SHADER, this.getClass(),
-                                            "shaders", "shaders/bin", shaderBasename, false);
-//        rsVp.defaultShaderCustomization(gl, true, true);
-//        rsFp.defaultShaderCustomization(gl, true, true);
+                                            "shaders", "shaders/bin", shaderBasename, true);
+        rsVp.replaceInShaderSource("NO_OF_INSTANCE", String.valueOf(NO_OF_INSTANCE));
 
         // Create & Link the shader program
         ShaderProgram sp = new ShaderProgram();
@@ -194,7 +192,6 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
-		System.out.println("Window resized to width=" + width + " height=" + height);
 		GL4 gl3 = drawable.getGL().getGL4();
 		gl3.glViewport(0, 0, width, height);
 		aspect = (float) width / (float) height;
@@ -223,18 +220,16 @@ public class ManyTriangleVAOInstancedExperiment1 implements GLEventListener {
 		generateTriangleTransform();
 		st.uniform(gl, transformMatrixUniform);
 		//gl.glVertexAttribDivisor() is not required since each instance has the same attribute (color).
-		gl.glDrawArraysInstanced(GL4.GL_TRIANGLES, 0, 3, NO_OF_TRIANGLES);
+		gl.glDrawArraysInstanced(GL4.GL_TRIANGLES, 0, 3, NO_OF_INSTANCE);
 		st.useProgram(gl, false);
 	}
 
-	private final FloatBuffer triangleTransform = FloatBuffer.allocate(16 * NO_OF_TRIANGLES);
+	private final FloatBuffer triangleTransform = FloatBuffer.allocate(16 * NO_OF_INSTANCE);
 
 	private void generateTriangleTransform() {
 		triangleTransform.clear();
-		for(int i = 0; i < NO_OF_TRIANGLES; i++) {
-			mat[i].translate(0.1f, 0.1f, 0);
+		for(int i = 0; i < NO_OF_INSTANCE; i++) {
 			mat[i].rotate(rotationSpeed[i], 0, 0, 1);
-			mat[i].translate(-0.1f, -0.1f, 0);
 			triangleTransform.put(mat[i].getMatrix());
 		}
 		triangleTransform.flip();

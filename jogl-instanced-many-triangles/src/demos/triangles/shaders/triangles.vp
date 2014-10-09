@@ -1,7 +1,7 @@
 #version 410
 
 uniform mat4 uniform_Projection;
-uniform mat4 uniform_Transform[30];
+uniform mat4 uniform_Transform[NO_OF_INSTANCE];
 in vec3  VertexPosition; 
 in vec4  VertexColor; 
 out vec4    varying_Color;
