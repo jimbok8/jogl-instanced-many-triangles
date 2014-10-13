@@ -58,19 +58,20 @@ public class TestInstancedReneringGL4NEWT extends UITestCase {
 		}
 		return new GLCapabilities(GLProfile.get(profile));
 	}
+
 	@Test
 	public void test01_01a() throws InterruptedException {
 		final GLCapabilities caps = getCaps(GLProfile.GL4);
 		if( null == caps ) { return; }
-		testImpl(caps, new TrianglesInstancedRendererHardcoded(null));
-	}
-
-	@Test
-	public void test02_01b() throws InterruptedException {
-		final GLCapabilities caps = getCaps(GLProfile.GL4);
-		if( null == caps ) { return; }
 		testImpl(caps, new TriangleInstancedRendererWithShaderState(null));
 	}
+
+//	@Test
+//	public void test02_01b() throws InterruptedException {
+//		final GLCapabilities caps = getCaps(GLProfile.GL4);
+//		if( null == caps ) { return; }
+//		testImpl(caps, new TrianglesInstancedRendererHardcoded(null));
+//	}
 
 	private void testImpl(final GLCapabilities caps, final GLEventListener glel) throws InterruptedException {
 		final GLWindow glWindow = GLWindow.create(caps);
